@@ -14,17 +14,20 @@
         
         /* A4 Single Page Print & PDF Optimization */
         @media print {
-    /* পেজের সাইজ এবং মার্জিন সেট করা যাতে এক পৃষ্ঠায় ফিট হয় */
     @page {
         size: A4 portrait;
-        margin: 5mm;
+        margin: 3mm;
     }
 
-    /* আসল কালার ও ব্যাকগ্রাউন্ড ঠিক রাখার জন্য এটি অত্যন্ত জরুরি */
     * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        color-adjust: exact !important;
+    }
+
+    body, html {
+        height: 100% !important;
+        overflow: hidden !important;
+        background: white !important;
     }
 
     body * {
@@ -41,11 +44,13 @@
         top: 0 !important;
         width: 100% !important;
         margin: 0 !important;
-        padding: 2mm !important;
+        padding: 0 !important;
         box-shadow: none !important;
-        /* লেখা ও ছকগুলো যেন ছোট হয়ে এক পৃষ্ঠার ভেতরে সুন্দরভাবে সেট হয় */
-        transform: scale(0.92);
+        /* স্কেল সামান্য কমিয়ে 0.85 করা হলো যাতে এক পৃষ্ঠার ভেতরে সুন্দরভাবে আটকে থাকে */
+        transform: scale(0.85);
         transform-origin: top center;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
     }
 }
 
