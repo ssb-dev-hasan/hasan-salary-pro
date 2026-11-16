@@ -1,159 +1,525 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HASAN Monthly Working and Salary Record</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2pdf Library for PDF Download -->
+    <!-- html2pdf.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-</head>
-<body class="bg-slate-100 text-slate-800 font-sans p-4 max-w-md mx-auto">
-
-    <!-- Top Header Section -->
-    <div class="flex justify-between items-center mb-4 bg-white p-3 rounded-xl shadow-sm">
-        <h1 class="font-bold text-blue-900 text-lg">HASAN SYSTEM</h1>
-        <div id="currentMonthDisplay" class="font-semibold text-sm text-slate-600">November 2026</div>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="grid grid-cols-2 gap-2 mb-4">
-        <button onclick="downloadPDF()" class="bg-indigo-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-indigo-700 transition">📥 Download PDF</button>
-        <button onclick="saveCurrentData()" class="bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-700 transition">💾 Save Data</button>
-    </div>
-
-    <!-- Main Content Area for PDF Generation -->
-    <div id="pdfContent" class="bg-white p-4 rounded-xl shadow-md space-y-4">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         
-        <div class="text-center border-b pb-2">
-            <h2 class="font-bold text-md text-slate-900">Monthly Working & Salary Record</h2>
-            <p class="text-xs text-slate-500">Hasan Project Record System</p>
+        /* A4 Single Page Print & PDF Optimization */
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+            .print-container { box-shadow: none !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
+        }
+
+        /* Watermark Style */
+        .watermark-bg {
+            position: relative;
+        }
+        .watermark-bg::before {
+            content: "HASAN";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 110px;
+            font-weight: 800;
+            color: rgba(0, 0, 0, 0.03);
+            pointer-events: none;
+            z-index: 0;
+            letter-spacing: 15px;
+        }
+
+        /* Ultra-compact table cells for single page A4 fit */
+        .compact-table th, .compact-table td {
+            padding: 1px 3px !important;
+            font-size: 10px !important;
+            height: 21px !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen py-6 px-2 sm:px-4">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Top Control Bar (No Print) -->
+        <div class="no-print bg-white p-4 rounded-xl shadow-md mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="bg-blue-600 text-white font-bold px-3 py-1.5 rounded-lg text-sm shadow">HASAN SYSTEM</span>
+                <select id="monthSelector" onchange="switchMonth(this.value)" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <!-- Populated dynamically -->
+                </select>
+                <button onclick="addNewMonth()" class="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow transition flex items-center gap-1">
+                    + Add New Month
+                </button>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <!-- History Button at Top -->
+                <button onclick="openHistoryModal()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow transition flex items-center gap-1">
+                    📜 History (<span id="historyBadgeCount">0</span>)
+                </button>
+                <button onclick="downloadPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition flex items-center gap-1">
+                    📥 Download PDF
+                </button>
+                <button onclick="saveCurrentData()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition">
+                    💾 Save Data
+                </button>
+            </div>
         </div>
 
-        <!-- Employee Info Table -->
-        <div class="border rounded-lg overflow-hidden">
-            <table class="w-full text-xs">
-                <tr class="border-b bg-slate-50">
-                    <td class="p-2 font-semibold w-1/3">Employee Name:</td>
-                    <td class="p-2"><input type="text" id="empName" placeholder="Enter Name" class="w-full bg-transparent outline-none border-b focus:border-blue-500"></td>
-                </tr>
-                <tr class="border-b">
-                    <td class="p-2 font-semibold">ID No:</td>
-                    <td class="p-2"><input type="text" id="empId" placeholder="Enter ID" class="w-full bg-transparent outline-none border-b focus:border-blue-500"></td>
-                </tr>
-                <tr class="border-b bg-slate-50">
-                    <td class="p-2 font-semibold">Location:</td>
-                    <td class="p-2"><input type="text" id="empLoc" placeholder="Enter Location" class="w-full bg-transparent outline-none border-b focus:border-blue-500"></td>
+        <!-- Main Printable Sheet -->
+        <div id="pdfContent" class="print-container bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6 watermark-bg overflow-hidden relative">
+            
+            <!-- Header Title -->
+            <div class="bg-blue-900 text-white text-center py-2 rounded font-bold text-sm sm:text-base mb-3 shadow-sm">
+                Monthly Working and Salary Record Template
+            </div>
+
+            <!-- Metadata Section -->
+            <table class="w-full border-collapse border border-gray-400 text-xs mb-3">
+                <tr>
+                    <td class="border border-gray-400 p-1 font-semibold bg-gray-50 w-1/4">Employee Name:</td>
+                    <td class="border border-gray-400 p-1 w-1/4"><input type="text" id="empName" placeholder="Enter Employee Name" class="w-full bg-transparent focus:outline-none" oninput="saveAuto()"></td>
+                    <td class="border border-gray-400 p-1 font-semibold bg-gray-50 w-1/4">Normal Rate (RM):</td>
+                    <td class="border border-gray-400 p-1 w-1/4"><input type="number" id="rateNormal" value="9.00" class="w-full bg-transparent focus:outline-none" oninput="calculateAll()"></td>
                 </tr>
                 <tr>
-                    <td class="p-2 font-semibold">Rate Setup:</td>
-                    <td class="p-2 text-blue-600 font-medium">Standard Rates Active</td>
+                    <td class="border border-gray-400 p-1 font-semibold bg-gray-50">ID No:</td>
+                    <td class="border border-gray-400 p-1"><input type="text" id="empId" placeholder="Enter ID Number" class="w-full bg-transparent focus:outline-none" oninput="saveAuto()"></td>
+                    <td class="border border-gray-400 p-1 font-semibold bg-gray-50">Overtime Rate (RM):</td>
+                    <td class="border border-gray-400 p-1"><input type="number" id="rateOT" value="13.50" class="w-full bg-transparent focus:outline-none" oninput="calculateAll()"></td>
+                </tr>
+                <tr>
+                    <td class="border border-gray-400 p-1 font-semibold bg-gray-50">Location:</td>
+                    <td class="border border-gray-400 p-1"><input type="text" id="empLoc" placeholder="Enter Location" class="w-full bg-transparent focus:outline-none" oninput="saveAuto()"></td>
+                    <td class="border border-gray-400 p-1 font-semibold bg-gray-50">Sunday Rate (RM):</td>
+                    <td class="border border-gray-400 p-1"><input type="number" id="rateSun" value="13.50" class="w-full bg-transparent focus:outline-none" oninput="calculateAll()"></td>
+                </tr>
+                <tr>
+                    <td class="border border-gray-400 p-1 font-semibold bg-gray-50">Dept:</td>
+                    <td class="border border-gray-400 p-1"><input type="text" id="empDept" placeholder="Enter Department" class="w-full bg-transparent focus:outline-none" oninput="saveAuto()"></td>
+                    <td class="border border-gray-400 p-1 font-semibold bg-gray-50">PHD Rate (RM/h):</td>
+                    <td class="border border-gray-400 p-1"><input type="number" id="ratePHD" value="13.50" class="w-full bg-transparent focus:outline-none" oninput="calculateAll()"></td>
+                </tr>
+                <tr>
+                    <td class="border border-gray-400 p-1 font-semibold bg-gray-50">Month / Year:</td>
+                    <td colspan="3" class="border border-gray-400 p-1 font-semibold text-blue-900" id="currentMonthLabel">October 2026</td>
                 </tr>
             </table>
-        </div>
 
-        <!-- Summary Statistics -->
-        <div class="grid grid-cols-2 gap-2 text-center">
-            <div class="bg-blue-50 p-2 rounded-lg border border-blue-100">
-                <span class="text-[10px] text-slate-500 block">Total Working Hours</span>
-                <span id="totalHrs" class="font-bold text-blue-900 text-sm">0.00 hrs</span>
-            </div>
-            <div class="bg-emerald-50 p-2 rounded-lg border border-emerald-100">
-                <span class="text-[10px] text-slate-500 block">Total Earnings</span>
-                <span id="totalPay" class="font-bold text-emerald-700 text-sm">RM 0.00</span>
+            <!-- Daily Working Table (31 Days) -->
+            <table class="w-full border-collapse border border-gray-400 text-center compact-table mb-2">
+                <thead>
+                    <tr class="bg-blue-900 text-white font-semibold">
+                        <th class="border border-gray-400 w-16">Date / Day</th>
+                        <th class="border border-gray-400">Normal Hours</th>
+                        <th class="border border-gray-400">Overtime Hours</th>
+                        <th class="border border-gray-400">Sunday Hours</th>
+                        <th class="border border-gray-400">PHD Hours</th>
+                        <th class="border border-gray-400">Daily Total Hours</th>
+                        <th class="border border-gray-400">Daily Total Salary</th>
+                        <th class="border border-gray-400">Remarks</th>
+                    </tr>
+                </thead>
+                <tbody id="daysTableBody">
+                    <!-- Javascript will populate 31 days here -->
+                </tbody>
+            </table>
+
+            <!-- Summary Table -->
+            <table class="w-full border-collapse border border-gray-400 text-xs mb-3">
+                <tr class="bg-blue-900 text-white font-semibold">
+                    <td class="border border-gray-400 p-1 w-1/5">Total Hours</td>
+                    <td class="border border-gray-400 p-1 text-center w-1/5" id="totNormalHrs">0.00</td>
+                    <td class="border border-gray-400 p-1 text-center w-1/5" id="totOTHrs">0.00</td>
+                    <td class="border border-gray-400 p-1 text-center w-1/5" id="totSunHrs">0.00</td>
+                    <td class="border border-gray-400 p-1 text-center w-1/5" id="totPHDHrs">0.00</td>
+                </tr>
+                <tr>
+                    <td class="border border-gray-400 p-1 font-semibold bg-gray-50">Hourly Rate</td>
+                    <td class="border border-gray-400 p-1 text-center" id="lblRateNormal">9.00</td>
+                    <td class="border border-gray-400 p-1 text-center" id="lblRateOT">13.50</td>
+                    <td class="border border-gray-400 p-1 text-center" id="lblRateSun">13.50</td>
+                    <td class="border border-gray-400 p-1 text-center"></td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="border border-gray-400 p-1 font-bold bg-gray-100 text-right">Sub-total Earnings</td>
+                    <td class="border border-gray-400 p-1 font-bold text-right pr-2" id="subTotalEarnings">0.00</td>
+                </tr>
+                <tr class="bg-blue-900 text-white font-bold text-sm">
+                    <td colspan="4" class="border border-gray-400 p-1.5 text-right">Grand Total Pay (RM)</td>
+                    <td class="border border-gray-400 p-1.5 text-right pr-2 bg-emerald-600 text-white" id="grandTotalPay">0.00</td>
+                </tr>
+            </table>
+
+            <!-- Footer Branding & Copyright -->
+            <div class="text-center pt-2 border-t border-gray-300 text-[10px] text-gray-500">
+                System Brand: <span class="font-bold text-gray-700">HASAN</span> &nbsp;|&nbsp; © HASAN — All Rights Reserved
             </div>
         </div>
+    </div>
 
-        <!-- Quick Calculator Box -->
-        <div class="bg-slate-50 p-3 rounded-lg border space-y-2">
-            <h3 class="text-xs font-bold text-slate-700">Quick Daily Entry</h3>
-            <div class="grid grid-cols-4 gap-1 text-center text-[10px]">
-                <div>
-                    <label class="block text-slate-500">Normal</label>
-                    <input type="number" id="inputNormal" value="8" class="w-full text-center border rounded p-1">
-                </div>
-                <div>
-                    <label class="block text-slate-500">Overtime</label>
-                    <input type="number" id="inputOT" value="2" class="w-full text-center border rounded p-1">
-                </div>
-                <div>
-                    <label class="block text-slate-500">Sunday</label>
-                    <input type="number" id="inputSun" value="0" class="w-full text-center border rounded p-1">
-                </div>
-                <div>
-                    <label class="block text-slate-500">PHD</label>
-                    <input type="number" id="inputPHD" value="0" class="w-full text-center border rounded p-1">
-                </div>
+    <!-- History Popup Modal (No Print) -->
+    <div id="historyModalOverlay" class="no-print fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-fadeIn">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-blue-900 text-white">
+                <h3 class="font-bold text-sm flex items-center gap-2">📂 Saved Monthly History (Click a card to Edit)</h3>
+                <button onclick="closeHistoryModal()" class="text-white hover:text-red-300 text-xl font-bold px-2">✕</button>
             </div>
-            <button onclick="calculateSalary()" class="w-full bg-slate-800 text-white text-xs py-1.5 rounded mt-2 hover:bg-black transition">Calculate & Update</button>
+            <div id="historyCardsContainer" class="p-4 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50 flex-1">
+                <!-- History cards will render here -->
+            </div>
+            <div class="p-3 border-t border-gray-200 bg-white text-right">
+                <button onclick="closeHistoryModal()" class="bg-gray-600 hover:bg-gray-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">Close</button>
+            </div>
         </div>
-
     </div>
 
     <!-- JavaScript Logic -->
     <script>
-        function calculateSalary() {
-            const n = parseFloat(document.getElementById('inputNormal').value) || 0;
-            const ot = parseFloat(document.getElementById('inputOT').value) || 0;
-            const sun = parseFloat(document.getElementById('inputSun').value) || 0;
-            const phd = parseFloat(document.getElementById('inputPHD').value) || 0;
+        let dbData = {};
+        try {
+            dbData = JSON.parse(localStorage.getItem('hasan_salary_db'));
+        } catch (e) {
+            dbData = null;
+        }
 
-            const totalHours = n + ot + sun + phd;
-            // Rates calculation (Normal rate: 9, OT/Sun/PHD: 13.5)
-            const pay = (n * 9) + (ot * 13.5) + (sun * 13.5) + (phd * 13.5);
+        if (!dbData || typeof dbData !== 'object' || Array.isArray(dbData) || Object.keys(dbData).length === 0) {
+            dbData = {
+                "October 2026": {
+                    empName: "", empId: "", empLoc: "", empDept: "",
+                    rateNormal: 9.00, rateOT: 13.50, rateSun: 13.50, ratePHD: 13.50,
+                    days: {}
+                }
+            };
+            localStorage.setItem('hasan_salary_db', JSON.stringify(dbData));
+        }
 
-            document.getElementById('totalHrs').innerText = totalHours.toFixed(2) + " hrs";
-            document.getElementById('totalPay').innerText = "RM " + pay.toFixed(2);
+        let activeMonth = Object.keys(dbData)[0];
+
+        function buildDaysTable() {
+            const tbody = document.getElementById('daysTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            for(let i = 1; i <= 31; i++) {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="border border-gray-300 font-medium bg-gray-50">Day ${i}</td>
+                    <td class="border border-gray-300 p-0"><input type="number" step="any" class="w-full h-full text-center bg-transparent focus:bg-blue-50 focus:outline-none" id="n_${i}" oninput="calculateAll()"></td>
+                    <td class="border border-gray-300 p-0"><input type="number" step="any" class="w-full h-full text-center bg-transparent focus:bg-blue-50 focus:outline-none" id="ot_${i}" oninput="calculateAll()"></td>
+                    <td class="border border-gray-300 p-0"><input type="number" step="any" class="w-full h-full text-center bg-transparent focus:bg-blue-50 focus:outline-none" id="sun_${i}" oninput="calculateAll()"></td>
+                    <td class="border border-gray-300 p-0"><input type="number" step="any" class="w-full h-full text-center bg-transparent focus:bg-blue-50 focus:outline-none" id="phd_${i}" oninput="calculateAll()"></td>
+                    <td class="border border-gray-300 text-center font-medium" id="tot_h_${i}"></td>
+                    <td class="border border-gray-300 text-center font-medium" id="tot_s_${i}"></td>
+                    <td class="border border-gray-300 p-0"><input type="text" class="w-full h-full px-1 bg-transparent focus:bg-blue-50 focus:outline-none text-left" id="rem_${i}" oninput="saveAuto()"></td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        function renderMonthSelector() {
+            const selector = document.getElementById('monthSelector');
+            if(!selector) return;
+            selector.innerHTML = '';
+            Object.keys(dbData).forEach(m => {
+                let opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m;
+                if(m === activeMonth) opt.selected = true;
+                selector.appendChild(opt);
+            });
+            const lbl = document.getElementById('currentMonthLabel');
+            if(lbl) lbl.textContent = activeMonth;
+        }
+
+        function loadMonthData(monthKey) {
+            if(!dbData[monthKey]) {
+                dbData[monthKey] = {
+                    empName: "", empId: "", empLoc: "", empDept: "",
+                    rateNormal: 9.00, rateOT: 13.50, rateSun: 13.50, ratePHD: 13.50,
+                    days: {}
+                };
+            }
+            activeMonth = monthKey;
+            const lbl = document.getElementById('currentMonthLabel');
+            if(lbl) lbl.textContent = activeMonth;
+            
+            buildDaysTable();
+
+            let data = dbData[activeMonth];
+
+            document.getElementById('empName').value = data.empName || '';
+            document.getElementById('empId').value = data.empId || '';
+            document.getElementById('empLoc').value = data.empLoc || '';
+            document.getElementById('empDept').value = data.empDept || '';
+            
+            document.getElementById('rateNormal').value = data.rateNormal ?? 9.00;
+            document.getElementById('rateOT').value = data.rateOT ?? 13.50;
+            document.getElementById('rateSun').value = data.rateSun ?? 13.50;
+            document.getElementById('ratePHD').value = data.ratePHD ?? 13.50;
+
+            if(data.days) {
+                for(let i = 1; i <= 31; i++) {
+                    if(data.days[i]) {
+                        let elN = document.getElementById(`n_${i}`);
+                        let elOT = document.getElementById(`ot_${i}`);
+                        let elSun = document.getElementById(`sun_${i}`);
+                        let elPHD = document.getElementById(`phd_${i}`);
+                        let elRem = document.getElementById(`rem_${i}`);
+
+                        if(elN) elN.value = data.days[i].n || '';
+                        if(elOT) elOT.value = data.days[i].ot || '';
+                        if(elSun) elSun.value = data.days[i].sun || '';
+                        if(elPHD) elPHD.value = data.days[i].phd || '';
+                        if(elRem) elRem.value = data.days[i].rem || '';
+                    }
+                }
+            }
+            calculateAll();
+        }
+
+        function calculateAll() {
+            let rN = parseFloat(document.getElementById('rateNormal').value) || 0;
+            let rOT = parseFloat(document.getElementById('rateOT').value) || 0;
+            let rSun = parseFloat(document.getElementById('rateSun').value) || 0;
+            let rPHD = parseFloat(document.getElementById('ratePHD').value) || 0;
+
+            document.getElementById('lblRateNormal').textContent = rN.toFixed(2);
+            document.getElementById('lblRateOT').textContent = rOT.toFixed(2);
+            document.getElementById('lblRateSun').textContent = rSun.toFixed(2);
+
+            let sumN = 0, sumOT = 0, sumSun = 0, sumPHD = 0;
+            let grandTotal = 0;
+
+            for(let i = 1; i <= 31; i++) {
+                let nEl = document.getElementById(`n_${i}`);
+                let otEl = document.getElementById(`ot_${i}`);
+                let sunEl = document.getElementById(`sun_${i}`);
+                let phdEl = document.getElementById(`phd_${i}`);
+
+                let n = nEl ? parseFloat(nEl.value) || 0 : 0;
+                let ot = otEl ? parseFloat(otEl.value) || 0 : 0;
+                let sun = sunEl ? parseFloat(sunEl.value) || 0 : 0;
+                let phd = phdEl ? parseFloat(phdEl.value) || 0 : 0;
+
+                sumN += n;
+                sumOT += ot;
+                sumSun += sun;
+                sumPHD += phd;
+
+                let dayHrs = n + ot + sun + phd;
+                let daySal = (n * rN) + (ot * rOT) + (sun * rSun) + (phd * rPHD);
+
+                let totH = document.getElementById(`tot_h_${i}`);
+                let totS = document.getElementById(`tot_s_${i}`);
+                if(totH) totH.textContent = dayHrs > 0 ? dayHrs.toFixed(2) : '';
+                if(totS) totS.textContent = daySal > 0 ? daySal.toFixed(2) : '';
+                
+                grandTotal += daySal;
+            }
+
+            document.getElementById('totNormalHrs').textContent = sumN.toFixed(2);
+            document.getElementById('totOTHrs').textContent = sumOT.toFixed(2);
+            document.getElementById('totSunHrs').textContent = sumSun.toFixed(2);
+            document.getElementById('totPHDHrs').textContent = sumPHD.toFixed(2);
+
+            document.getElementById('subTotalEarnings').textContent = grandTotal.toFixed(2);
+            document.getElementById('grandTotalPay').textContent = grandTotal.toFixed(2);
+
+            saveAuto();
+        }
+
+        function gatherCurrentData() {
+            let days = {};
+            for(let i = 1; i <= 31; i++) {
+                let n = document.getElementById(`n_${i}`)?.value || '';
+                let ot = document.getElementById(`ot_${i}`)?.value || '';
+                let sun = document.getElementById(`sun_${i}`)?.value || '';
+                let phd = document.getElementById(`phd_${i}`)?.value || '';
+                let rem = document.getElementById(`rem_${i}`)?.value || '';
+
+                if(n || ot || sun || phd || rem) {
+                    days[i] = { n, ot, sun, phd, rem };
+                }
+            }
+            return {
+                empName: document.getElementById('empName')?.value || '',
+                empId: document.getElementById('empId')?.value || '',
+                empLoc: document.getElementById('empLoc')?.value || '',
+                empDept: document.getElementById('empDept')?.value || '',
+                rateNormal: parseFloat(document.getElementById('rateNormal')?.value) || 0,
+                rateOT: parseFloat(document.getElementById('rateOT')?.value) || 0,
+                rateSun: parseFloat(document.getElementById('rateSun')?.value) || 0,
+                ratePHD: parseFloat(document.getElementById('ratePHD')?.value) || 0,
+                days: days
+            };
+        }
+
+        function saveAuto() {
+            if(!activeMonth) return;
+            dbData[activeMonth] = gatherCurrentData();
+            localStorage.setItem('hasan_salary_db', JSON.stringify(dbData));
+            renderHistoryCards();
         }
 
         function saveCurrentData() {
-            const data = {
-                name: document.getElementById('empName').value,
-                id: document.getElementById('empId').value,
-                location: document.getElementById('empLoc').value,
-                totalHrs: document.getElementById('totalHrs').innerText,
-                totalPay: document.getElementById('totalPay').innerText
-            };
-            localStorage.setItem('hasan_salary_data', JSON.stringify(data));
-            alert('Data saved successfully in browser storage!');
+            saveAuto();
+            alert('Data saved successfully for ' + activeMonth + '!');
+        }
+
+        function addNewMonth() {
+            let monthName = prompt("Enter Month & Year (e.g., November 2026):");
+            if(monthName && monthName.trim() !== "") {
+                monthName = monthName.trim();
+                if(!dbData[monthName]) {
+                    dbData[monthName] = {
+                        empName: "", empId: "", empLoc: "", empDept: "",
+                        rateNormal: 9.00, rateOT: 13.50, rateSun: 13.50, ratePHD: 13.50,
+                        days: {}
+                    };
+                    localStorage.setItem('hasan_salary_db', JSON.stringify(dbData));
+                }
+                activeMonth = monthName;
+                renderMonthSelector();
+                loadMonthData(activeMonth);
+                renderHistoryCards();
+            }
+        }
+
+        function switchMonth(m) {
+            loadMonthData(m);
+            renderHistoryCards();
+        }
+
+        function openHistoryModal() {
+            document.getElementById('historyModalOverlay').classList.remove('hidden');
+            renderHistoryCards();
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModalOverlay').classList.add('hidden');
+        }
+
+        function editFromHistory(monthKey) {
+            activeMonth = monthKey;
+            renderMonthSelector();
+            loadMonthData(monthKey);
+            closeHistoryModal();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteFromHistory(event, monthKey) {
+            event.stopPropagation();
+            if(Object.keys(dbData).length <= 1) {
+                alert("কমপক্ষে একটি মাসের রেকর্ড রাখতে হবে!");
+                return;
+            }
+            if(confirm(`আপনি কি নিশ্চিত যে "${monthKey}" এর হিস্টরি মুছে ফেলতে চান?`)) {
+                delete dbData[monthKey];
+                localStorage.setItem('hasan_salary_db', JSON.stringify(dbData));
+                activeMonth = Object.keys(dbData)[0];
+                renderMonthSelector();
+                loadMonthData(activeMonth);
+                renderHistoryCards();
+            }
+        }
+
+        function renderHistoryCards() {
+            const container = document.getElementById('historyCardsContainer');
+            const badge = document.getElementById('historyBadgeCount');
+            if(!container || !badge) return;
+
+            const months = Object.keys(dbData);
+            badge.textContent = months.length;
+            container.innerHTML = '';
+
+            months.forEach(monthKey => {
+                const item = dbData[monthKey];
+                let totalHrs = 0;
+                let totalPay = 0;
+
+                const rN = parseFloat(item.rateNormal) || 0;
+                const rOT = parseFloat(item.rateOT) || 0;
+                const rSun = parseFloat(item.rateSun) || 0;
+                const rPHD = parseFloat(item.ratePHD) || 0;
+
+                if(item.days) {
+                    for(let i = 1; i <= 31; i++) {
+                        if(item.days[i]) {
+                            const n = parseFloat(item.days[i].n) || 0;
+                            const ot = parseFloat(item.days[i].ot) || 0;
+                            const sun = parseFloat(item.days[i].sun) || 0;
+                            const phd = parseFloat(item.days[i].phd) || 0;
+                            totalHrs += (n + ot + sun + phd);
+                            totalPay += (n * rN) + (ot * rOT) + (sun * rSun) + (phd * rPHD);
+                        }
+                    }
+                }
+
+                const isActive = (monthKey === activeMonth);
+                const card = document.createElement('div');
+                card.onclick = () => editFromHistory(monthKey);
+                card.className = `cursor-pointer rounded-xl p-3 border transition-all shadow-sm hover:shadow-md ${
+                    isActive 
+                    ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-500/20' 
+                    : 'border-gray-200 bg-white hover:border-blue-300'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-bold text-xs text-blue-900">${monthKey}</h3>
+                            <p class="text-[11px] text-gray-600 truncate max-w-[140px]">${item.empName ? item.empName : 'No Employee Name'}</p>
+                        </div>
+                        <button onclick="deleteFromHistory(event, '${monthKey.replace(/'/g, "\\'")}')" title="Delete" class="text-gray-400 hover:text-red-600 text-xs p-1 rounded transition">
+                            🗑️
+                        </button>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px] text-gray-700 bg-gray-50 p-2 rounded border border-gray-100 mb-2">
+                        <div>
+                            <span class="text-gray-400 block text-[9px]">Total Hours</span>
+                            <span class="font-semibold">${totalHrs.toFixed(2)} hrs</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-gray-400 block text-[9px]">Total Pay</span>
+                            <span class="font-bold text-emerald-600">RM ${totalPay.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between text-[11px]">
+                        <span class="font-medium ${isActive ? 'text-blue-600' : 'text-gray-400'}">
+                            ${isActive ? '● Active Month' : 'Click to Select'}
+                        </span>
+                        <span class="font-semibold text-blue-600 hover:underline">✏️ Edit</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
         }
 
         function downloadPDF() {
             const element = document.getElementById('pdfContent');
             const opt = {
-                margin:       1,
-                filename:     'Hasan_Salary_Record.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                margin: [2, 2, 2, 2],
+                filename: `HASAN_Salary_${activeMonth.replace(/\s+/g, '_')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
             html2pdf().from(element).set(opt).save();
         }
 
-        // Load saved data on startup
-        window.onload = function() {
-            const saved = localStorage.getItem('hasan_salary_data');
-            if(saved) {
-                const data = JSON.parse(saved);
-                document.getElementById('empName').value = data.name || '';
-                document.getElementById('empId').value = data.id || '';
-                document.getElementById('empLoc').value = data.location || '';
-                if(data.totalHrs) document.getElementById('totalHrs').innerText = data.totalHrs;
-                if(data.totalPay) document.getElementById('totalPay').innerText = data.totalPay;
-            }
-        }
-    </script>
-
-    <!-- Service Worker Registration Script -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then((reg) => console.log('Service Worker registered!', reg))
-            .catch((err) => console.log('Service Worker registration failed', err));
+        // Initialize App on load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderMonthSelector();
+            loadMonthData(activeMonth);
+            renderHistoryCards();
         });
-      }
     </script>
 </body>
 </html>
