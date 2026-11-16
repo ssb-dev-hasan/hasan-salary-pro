@@ -25,6 +25,8 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          accept-license: true
 
       - name: Build Android APK with Capacitor
         run: |
@@ -35,7 +37,6 @@ jobs:
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
           
-          # সরাসরি কনফিগার ফাইল তৈরি করা হলো যাতে কোনো প্রম্পট বা এরর না আসে
           echo '{
             "appId": "com.hasan.salarypro",
             "appName": "Hasan Salary Pro",
