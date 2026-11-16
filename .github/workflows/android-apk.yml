@@ -46,6 +46,14 @@ jobs:
           }' > capacitor.config.json
           
           npx cap add android
+          
+          # কোটলিন লাইব্রেরি কনফ্লিক্ট সমাধান করার জন্য গ্রেডল রুল যুক্ত করা হলো
+          echo "
+          configurations.all {
+              resolutionStrategy.force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22', 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
+          }
+          " >> android/app/build.gradle
+          
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
