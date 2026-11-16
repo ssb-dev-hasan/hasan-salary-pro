@@ -95,15 +95,21 @@
                 </button>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-                <!-- History Button at Top -->
-                <button onclick="openHistoryModal()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow transition flex items-center gap-1">
-                    📜 History (<span id="historyBadgeCount">0</span>)
-                </button>
-                
-                <!-- PDF Download Button (এটি আবার ফিরিয়ে আনা হলো) -->
+    <!-- History Button at Top -->
+    <button onclick="openHistoryModal()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow flex items-center gap-1.5">
+        📜 History (<span id="historyBadgeCount">0</span>)
+    </button>
+    
+    <!-- PDF Download Button (এটি আবার ফিরিয়ে আনা হলো) -->
     <button onclick="downloadPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow flex items-center gap-1.5">
         📥 Download PDF
     </button>
+
+    <button onclick="saveCurrentData()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow flex items-center gap-1.5">
+        💾 Save Data
+    </button>
+</div>
+
 <script>
 async function downloadPDF() {
     // চেক করা হচ্ছে অ্যাপটি কি অ্যান্ড্রয়েড এপিকে (Capacitor Native App) তে চলছে কি না
@@ -126,11 +132,6 @@ async function downloadPDF() {
     }
 }
 </script>
-             <button onclick="saveCurrentData()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition">
-                    💾 Save Data
-                </button>
-            </div>
-        </div>
 
         <!-- Main Printable Sheet -->
         <div id="pdfContent" class="print-container bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6 watermark-bg overflow-hidden relative">
