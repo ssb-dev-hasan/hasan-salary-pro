@@ -26,14 +26,23 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Initialize Capacitor & Build APK
+      - name: Build Android APK with Capacitor
         run: |
           mkdir -p www
           cp index.html manifest.json sw.js www/ 2>/dev/null || true
           cp icon.png www/ 2>/dev/null || true
+          
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init "Hasan Salary Pro" "com.hasan.salarypro" --web-dir=www
+          
+          # সরাসরি কনফিগার ফাইল তৈরি করা হলো যাতে কোনো প্রম্পট বা এরর না আসে
+          echo '{
+            "appId": "com.hasan.salarypro",
+            "appName": "Hasan Salary Pro",
+            "webDir": "www",
+            "bundledWebRuntime": false
+          }' > capacitor.config.json
+          
           npx cap add android
           cd android
           chmod +x gradlew
