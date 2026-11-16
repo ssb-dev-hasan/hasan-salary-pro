@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+স্ত<!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
@@ -99,7 +99,18 @@
                 <button onclick="openHistoryModal()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow transition flex items-center gap-1">
                     📜 History (<span id="historyBadgeCount">0</span>)
                 </button>
-                <script>
+                
+                <!-- PDF Download Button (এটি আবার ফিরিয়ে আনা হলো) -->
+    <button onclick="downloadPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow flex items-center gap-1.5">
+        📥 Download PDF
+    </button>
+
+    <button onclick="saveCurrentData()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow flex items-center gap-1.5">
+        💾 Save Data
+    </button>
+</div>
+
+<script>
 async function downloadPDF() {
     // চেক করা হচ্ছে অ্যাপটি কি অ্যান্ড্রয়েড এপিকে (Capacitor Native App) তে চলছে কি না
     if (window.Capacitor && window.Capacitor.isNativePlatform()) {
@@ -121,7 +132,7 @@ async function downloadPDF() {
     }
 }
 </script>
-                <button onclick="saveCurrentData()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition">
+             <button onclick="saveCurrentData()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition">
                     💾 Save Data
                 </button>
             </div>
