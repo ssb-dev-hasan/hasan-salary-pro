@@ -15,7 +15,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
 
       - name: Set up Java JDK
         uses: actions/setup-java@v5
@@ -28,8 +28,9 @@ jobs:
 
       - name: Initialize Capacitor & Build APK
         run: |
-          mkdir www
-          cp index.html manifest.json sw.js icon.png www/ 2>/dev/null || true
+          mkdir -p www
+          cp index.html manifest.json sw.js www/ 2>/dev/null || true
+          cp icon.png www/ 2>/dev/null || true
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap init "Hasan Salary Pro" "com.hasan.salarypro" --web-dir=www
