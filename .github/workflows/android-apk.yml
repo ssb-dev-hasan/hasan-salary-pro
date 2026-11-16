@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Set up Java JDK 17
+      - name: Set up Java JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -32,10 +32,7 @@ jobs:
           cp index.html manifest.json sw.js icon.png www/ 2>/dev/null || true
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          
-          # আপনার নতুন প্রজেক্টের নাম ও প্যাকেজ আইডি এখানে সেট করা হলো
           npx cap init "Hasan Salary Pro" "com.hasan.salarypro" --web-dir=www
-          
           npx cap add android
           cd android
           chmod +x gradlew
